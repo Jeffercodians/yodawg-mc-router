@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+# @cmd
+up() {
+	_docker_compose up -d
+	register_ingress
+}
+
+# @cmd
+down() {
+	_docker_compose down
+	unregister_ingress
+}
+
+# @cmd
+status() {
+	_docker_compose ps
+}
+
+# @cmd
+logs() {
+	_docker_compose logs
+}
+
+# @cmd
+register_ingress() {
+	yo http add_service mc-router "${SERVICES_IP}:${SERVICE_PORT_REST}"
+	yo http reload
+}
+
+# @cmd
+unregister_ingress() {
+	yo http remove_service mc-router
+	yo http reload
+}
+
+# @cmd
+show_server_routes() {
+	curl -kL -H 'Accept: application/json' "https://${SERVICE_NAME}.smithery.local/routes"
+}
+
+# @cmd
+# @arg	server_name
+# @arg	hostport
+add_server() {
+	yo dns list_zones | awk "{ print \"${argc_server_name}.\"\$0 }" | \
+		xargs -rL1 /yodawg/yodawger ${SERVICE_NAME} \
+			add_route "${argc_hostport}"
+
+	yo dns all_zones add_record "${argc_server_name}" "A" "${SERVICES_IP}"
+}
+
+# @cmd
+# @arg hostport
+# @arg route
+add_route() {
+	curl -kL -XPOST -H 'Content-Type: application/json' \
+	       "https://${SERVICE_NAME}.smithery.local/routes" \
+	       -d "{\"serverAddress\":\"${argc_route}\",\"backend\":\"${argc_hostport}\"}"
+}
+
+# @cmd
+# @arg	server_name
+remove_server() {
+	yo dns all_zones remove_record "${argc_server_name}" "A"
+
+	yo dns list_zones | awk "{ print \"${server_name}.\"\$0 }" | \
+		xargs -rL1 /yodawg/yodawger ${SERVICE_NAME} remove_route
+}
+
+# @cmd
+# @arg	route
+remove_route() {
+	curl -kL -XDELETE "https://${SERVICE_NAME}.smithery.local/routes/${argc_route}"
+}
+
+# @cmd
+# @arg	route@
+set_default_server_route() {
+	:
+}
+
+eval "$(argc --argc-eval "${0}" "${@}")"
+

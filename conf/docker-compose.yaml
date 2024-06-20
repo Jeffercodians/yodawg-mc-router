@@ -1,0 +1,8 @@
+services:
+  router:
+    image: 'itzg/mc-router'
+    ports:
+      - "${SERVICE_PORT_REST}:80"
+      - "${SERVICE_PORT_MC}:25565"
+    environment:
+      API_BINDING: "0.0.0.0:80"
