@@ -2,24 +2,24 @@
 
 # @cmd
 up() {
-	_docker_compose up -d
+	docker_compose up -d
 	register_ingress
 }
 
 # @cmd
 down() {
-	_docker_compose down
+	docker_compose down
 	unregister_ingress
 }
 
 # @cmd
 status() {
-	_docker_compose ps
+	docker_compose ps
 }
 
 # @cmd
 logs() {
-	_docker_compose logs
+	docker_compose logs
 }
 
 # @cmd
@@ -64,7 +64,7 @@ add_route() {
 remove_server() {
 	yo dns all_zones remove_record "${argc_server_name}" "A"
 
-	yo dns list_zones | awk "{ print \"${server_name}.\"\$0 }" | \
+	yo dns list_zones | awk "{ print \"${argc_server_name}.\"\$0 }" | \
 		xargs -rL1 /yodawg/yodawger ${SERVICE_NAME} remove_route
 }
 
